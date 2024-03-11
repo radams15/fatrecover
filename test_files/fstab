@@ -1,0 +1,19 @@
+# This is a generated file.  Do not edit!
+#
+# To make changes, edit the fileSystems and swapDevices NixOS options
+# in your /etc/nixos/configuration.nix file.
+#
+# <file system> <mount point>   <type>  <options>       <dump>  <pass>
+
+# Filesystems.
+/dev/disk/by-uuid/0f3b47a3-b915-4141-abc7-efeaa0b7fcbc / ext4 x-initrd.mount 0 1
+none /usr/bin envfs fallback-path=/nix/store/n5q0d4b13ljqpv0fhy97vcfyfz2yzdn7-fallback-path,nofail 0 0
+/usr/bin /bin none bind,nofail 0 0
+/dev/disk/by-uuid/A53C-E99E /boot vfat defaults 0 2
+server:/mnt/share /mnt/share nfs nofail,x-systemd.automount,noauto,x-systemd.idle-timeout=600 0 0
+pi:/var/spool/asterisk /mnt/spool nfs nofail,x-systemd.automount,noauto,x-systemd.idle-timeout=600 0 0
+
+
+# Swap devices.
+/swapfile none swap defaults
+
