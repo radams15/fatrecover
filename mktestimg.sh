@@ -2,6 +2,7 @@
 
 FILES=test_files/*
 DELETE=(fstab LICENSE)
+#DELETE=()
 
 OUT=test.img
 SIZE=1G
