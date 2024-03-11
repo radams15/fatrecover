@@ -1,6 +1,6 @@
 #!/bin/bash
 
-FILES=test_files/*
+FILES=(test_files/* LICENSE README.md)
 DELETE=(fstab LICENSE)
 #DELETE=()
 

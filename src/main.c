@@ -59,6 +59,5 @@ int main(int argc, char** argv) {
         printf("%s 0=%x\n", dirent->fullname, dirent->fullname[0]);
     }
 
-    printf("\n");
     return 0;
 }
