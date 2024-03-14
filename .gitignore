@@ -1,4 +1,7 @@
 test.img
+main
+src/main
+src/main.o
 cmake-build-debug
 # Xcode
 #
