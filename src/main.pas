@@ -2,7 +2,14 @@ program FatRecover;
 
 {$mode Delphi}
 
+uses
+    sysutils;
+
+const
+    DeletedByte: byte = $E5;
+
 type
+
     DirEnt = record
         fullName: Array [0..10] of uint8;
 
@@ -34,19 +41,25 @@ type
         Reset(imgFile);
         Seek(imgFile, $10200);
 
-        for i:=0 to 32 do
+        for i := 0 to 32 do
         begin
             Read(imgFile, rootDir);
 
-            if rootDir.fullName[0] = $E5 then
+            if rootDir.fullName[0] = DeletedByte then
+            begin
                 Write('Deleted: ');
+                rootDir.fullName[0] := Byte('_');
+            end;
 
             name := StrPas(@rootDir.fullName);
 
-            WriteLn(name);
+            if length(name) <> 0 then
+            begin
+                WriteLn(Format('%s => %x bytes @ cluster %x', [name, rootDir.fileSize, rootDir.cluster]));
+            end;
         end;
     end;
 
 begin
-    ReadFile('../test.img');
+    ReadFile('test.img');
 end.
