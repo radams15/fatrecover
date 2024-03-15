@@ -13,7 +13,7 @@ type
         createTime: uint16;
         createDate: uint16;
         accessDate: uint16;
-        
+
         clusterHigh: uint16;
 
         modifiedTime: uint16;
@@ -48,7 +48,5 @@ type
     end;
 
 begin
-
     ReadFile('../test.img');
-
 end.
