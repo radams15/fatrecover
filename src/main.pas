@@ -3,7 +3,8 @@ program FatRecover;
 {$mode Delphi}
 
 uses
-    sysutils;
+    sysutils,
+    classes;
 
 const
     DeletedByte: byte = $E5;
@@ -34,19 +35,28 @@ type
     ClusterFile = File of Cluster;
     DirEntFile = File of DirEnt;
 
-    procedure ReadClusterChain(dirFile: DirEnt ; fat: Cluster);
+    procedure PrintFatCluster(var imgFile: ClusterFile ; clusterNum: uint32);
+    begin
+        Seek(imgFile, $4136 + clusterNum);
+        WriteLn(Format(#9'%x', [clusterNum]));
+    end;
+
+    procedure ReadClusterChain(var imgFile: ClusterFile ; dirFile: DirEnt ; fat: Cluster);
     var
         fatVal: uint32;
         i: uint32;
     begin
-        for i:=0 to 16 do
+        fatVal := dirFile.cluster;
+        for i:=0 to 32 do
         begin
-            fatVal := fat[i] AND $0FFFFFFF;
-            WriteLn(Format('%x => %x', [i, fatVal]));
+            PrintFatCluster(imgFile, fatVal);
+            fatVal := fat[fatVal] AND $0FFFFFFF;
+            // WriteLn(Format('%x', [fatVal]));
+            if fatVal >= $0FFFFFF7 then Exit;
         end;
     end;
 
-    procedure PrintDirEnt(var imgFile: DirEntFile ; fat: Cluster);
+    function ReadDirEnt(var imgFile: DirEntFile ; fat: Cluster) : DirEnt;
     var
         rootDir: DirEnt;
         name: String;
@@ -55,7 +65,7 @@ type
 
         if rootDir.fullName[0] = DeletedByte then
         begin
-            //Write('Deleted: ');
+            { Deleted }
             rootDir.fullName[0] := Byte('_');
         end;
 
@@ -63,18 +73,20 @@ type
 
         if length(name) = 0 then
         begin
+            Result.fullName[0] := Byte(0);
             Exit;
         end;
 
-        WriteLn(Format('%s => %x bytes @ cluster %x', [name, rootDir.fileSize, rootDir.cluster]));
+        ReadDirEnt := rootDir;
 
-        ReadClusterChain(rootDir, fat);
+        // WriteLn(Format('%s => %x bytes @ cluster %x', [name, rootDir.fileSize, rootDir.cluster]));
+
+        // ReadClusterChain(ClusterFile(imgFile), rootDir, fat);
     end;
 
     function ReadFat(var imgFile: ClusterFile) : Cluster;
     var
         fat: Cluster;
-
     begin
         Reset(imgFile);
         Seek(imgFile, $20);
@@ -84,16 +96,26 @@ type
         ReadFat := fat;
     end;
 
-    procedure ReadDir(var dirFile: DirEntFile ; fat: Cluster);
+    function ReadDir(var dirFile: DirEntFile ; fat: Cluster) : TArray<DirEnt>;
     var
         i: uint32;
+        fileEnt: DirEnt;
     begin
         Reset(dirFile);
         Seek(dirFile, $10200);
 
+        Result := TArray<DirEnt>.Create;
+
         for i := 0 to 32 do
         begin
-            PrintDirEnt(dirFile, fat);
+            fileEnt := ReadDirEnt(dirFile, fat);
+
+            if fileEnt.fullName[0] <> 0 then
+            begin
+                SetLength(Result, Length(Result)+1);
+
+                Result[High(Result)] := fileEnt;
+            end;
         end;
     end;
 
@@ -101,11 +123,21 @@ type
     var
         imgFile: ClusterFile;
         fat: Cluster;
+        files: TArray<DirEnt>;
+        dirFile: DirEnt;
+        dirFileName: String;
     begin
         AssignFile(imgFile, fileName);
 
         fat := ReadFat(imgFile);
-        ReadDir(DirEntFile(imgFile), fat);
+        files := ReadDir(DirEntFile(imgFile), fat);
+
+        for dirFile in files do
+        begin
+            dirFileName := StrPas(@dirFile.fullName);
+
+            WriteLn(dirFileName);
+        end;
     end;
 
 begin

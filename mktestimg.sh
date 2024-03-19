@@ -1,8 +1,8 @@
 #!/bin/bash
 
 FILES=(test_files/* LICENSE README.md)
-DELETE=(fstab LICENSE)
-#DELETE=()
+#DELETE=(fstab LICENSE)
+DELETE=()
 
 OUT=test.img
 SIZE=1G
