@@ -36,9 +36,20 @@ type
     DirEntFile = File of DirEnt;
 
     procedure PrintFatCluster(var imgFile: ClusterFile ; clusterNum: uint32);
+    var
+        clusterValue: Cluster;
+        i: uint32;
     begin
-        Seek(imgFile, $4136 + clusterNum);
+        Reset(imgFile);
+        Seek(imgFile, $1028 + clusterNum);
+        Read(imgFile, clusterValue);
         WriteLn(Format(#9'%x', [clusterNum]));
+
+        for i := 0 to 128 do
+        begin
+            Write(Format('%c', [clusterValue[i]]));
+        end;
+        WriteLn('');
     end;
 
     procedure ReadClusterChain(var imgFile: ClusterFile ; dirFile: DirEnt ; fat: Cluster);
@@ -51,7 +62,6 @@ type
         begin
             PrintFatCluster(imgFile, fatVal);
             fatVal := fat[fatVal] AND $0FFFFFFF;
-            // WriteLn(Format('%x', [fatVal]));
             if fatVal >= $0FFFFFF7 then Exit;
         end;
     end;
@@ -65,7 +75,7 @@ type
 
         if rootDir.fullName[0] = DeletedByte then
         begin
-            { Deleted }
+            { Is deleted }
             rootDir.fullName[0] := Byte('_');
         end;
 
@@ -79,9 +89,7 @@ type
 
         ReadDirEnt := rootDir;
 
-        // WriteLn(Format('%s => %x bytes @ cluster %x', [name, rootDir.fileSize, rootDir.cluster]));
 
-        // ReadClusterChain(ClusterFile(imgFile), rootDir, fat);
     end;
 
     function ReadFat(var imgFile: ClusterFile) : Cluster;
@@ -136,7 +144,9 @@ type
         begin
             dirFileName := StrPas(@dirFile.fullName);
 
-            WriteLn(dirFileName);
+            WriteLn(Format('%s => %x bytes @ cluster %x', [dirFileName, dirFile.fileSize, dirFile.cluster]));
+
+            ReadClusterChain(ClusterFile(imgFile), dirFile, fat);
         end;
     end;
 
