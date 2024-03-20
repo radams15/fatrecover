@@ -32,22 +32,24 @@ type
     end;
 
     Cluster = Array[0..127] of uint32;
+    Cluster8 = Array[0..511] of uint8;
     ClusterFile = File of Cluster;
+    Cluster8File = File of Cluster8;
     DirEntFile = File of DirEnt;
 
-    procedure PrintFatCluster(var imgFile: ClusterFile ; clusterNum: uint32);
+    procedure PrintFatCluster(var imgFile: Cluster8File ; clusterNum: uint32);
     var
-        clusterValue: Cluster;
+        clusterValue: Cluster8;
         i: uint32;
     begin
-        Reset(imgFile);
-        Seek(imgFile, $1028 + clusterNum);
+        Reset(imgFile, 512);
+        Seek(imgFile, $1025+clusterNum);
         Read(imgFile, clusterValue);
-        WriteLn(Format(#9'%x', [clusterNum]));
+        WriteLn(Format(#9'%x => %x', [clusterNum, ($1025 + clusterNum)]));
 
-        for i := 0 to 128 do
+        for i := 0 to 512 do
         begin
-            Write(Format('%c', [clusterValue[i]]));
+            Write(Char(clusterValue[i]));
         end;
         WriteLn('');
     end;
@@ -60,7 +62,7 @@ type
         fatVal := dirFile.cluster;
         for i:=0 to 32 do
         begin
-            PrintFatCluster(imgFile, fatVal);
+            PrintFatCluster(Cluster8File(imgFile), fatVal);
             fatVal := fat[fatVal] AND $0FFFFFFF;
             if fatVal >= $0FFFFFF7 then Exit;
         end;
@@ -75,7 +77,7 @@ type
 
         if rootDir.fullName[0] = DeletedByte then
         begin
-            { Is deleted }
+            { Is deleted, change deleted char to '_' }
             rootDir.fullName[0] := Byte('_');
         end;
 
@@ -87,9 +89,7 @@ type
             Exit;
         end;
 
-        ReadDirEnt := rootDir;
-
-
+        Result := rootDir;
     end;
 
     function ReadFat(var imgFile: ClusterFile) : Cluster;
